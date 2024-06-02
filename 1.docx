@@ -1,0 +1,86 @@
+; Программа для управления робот-машиной по заданным условиям
+    list    P=16F84A
+    include <P16F84A.inc>
+
+; Конфигурация инициализации
+    __CONFIG _CP_OFF & _WDT_OFF & _XT_OSC
+
+; Определение порта
+BUTTON1 EQU 2        ; Кнопка 1 на RA0(RA2)
+BUTTON2 EQU 3        ; Кнопка 2 на RA1(RA3)
+BUTTON3 EQU 0         ; Кнопка 3 на RA2(RA0)
+BUTTON4 EQU 1         ; Кнопка 4 на RA3(RA1)
+
+MOTOR1_DIR1 EQU 3    ; Направление 1 двигатель 1 на RB0
+MOTOR1_DIR2 EQU 2    ; Направление 2 двигатель 1 на RB1
+MOTOR2_DIR1 EQU 1     ; Направление 1 двигатель 2 на RB2
+MOTOR2_DIR2 EQU 2    ; Направление 2 двигатель 2 на RB3
+
+; Сегмент памяти данных
+ORG 0x00
+    GOTO START
+
+; Сегмент основной программы
+ORG 0x05
+
+START
+    ; Инициализация портов
+    BSF     STATUS, RP0       ; Переход в банк 1
+    MOVLW   B'00001111'       ; Устанавливаем RA0-RA3 как входы
+    TRIS    PORTA
+    MOVLW   B'00000000'       ; Устанавливаем RB0-RB3 как выходы
+    TRIS    PORTB
+    BCF     STATUS, RP0       ; Возврат в банк 0
+
+MAIN_LOOP
+    ; Чтение состояния кнопок
+    BTFSS   PORTA, BUTTON1
+    CALL    MOTOR1_FORWARD
+    BTFSS   PORTA, BUTTON2
+    CALL    MOTOR1_BACKWARD
+    BTFSS   PORTA, BUTTON3
+    CALL    MOTOR2_FORWARD
+    BTFSS   PORTA, BUTTON4
+    CALL    MOTOR2_BACKWARD
+
+    ; Если кнопка отпущена, остановка двигателей
+    BTFSC   PORTA, BUTTON1
+    BTFSC   PORTA, BUTTON2
+    CALL    STOP_MOTOR1
+    BTFSC   PORTA, BUTTON3
+    BTFSC   PORTA, BUTTON4
+    CALL    STOP_MOTOR2
+
+    GOTO    MAIN_LOOP
+
+MOTOR1_FORWARD
+    BSF     PORTB, MOTOR1_DIR1
+    BCF     PORTB, MOTOR1_DIR2
+    RETURN
+
+MOTOR1_BACKWARD
+    BCF     PORTB, MOTOR1_DIR1
+    BSF     PORTB, MOTOR1_DIR2
+    RETURN
+
+STOP_MOTOR1
+    BCF     PORTB, MOTOR1_DIR1
+    BCF     PORTB, MOTOR1_DIR2
+    RETURN
+
+MOTOR2_FORWARD
+    BSF     PORTB, MOTOR2_DIR1
+    BCF     PORTB, MOTOR2_DIR2
+    RETURN
+
+MOTOR2_BACKWARD
+    BCF     PORTB, MOTOR2_DIR1
+    BSF     PORTB, MOTOR2_DIR2
+    RETURN
+
+STOP_MOTOR2
+    BCF     PORTB, MOTOR2_DIR1
+    BCF     PORTB, MOTOR2_DIR2
+    RETURN
+
+    END
